@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>東北多巴胺之旅移動地圖</title>
+    <title>東北雪國多巴胺極限之旅</title>
     <!-- 載入 React 框架 -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -16,6 +16,11 @@
     <style>
         body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
         #root { height: 100%; }
+        /* 自定義捲軸樣式 */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
 <body>
@@ -27,7 +32,9 @@
         // 模擬 Lucide React 圖示組件
         const Icon = ({ name, className }) => {
             useEffect(() => {
-                lucide.createIcons();
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
             }, [name]);
             return <i data-lucide={name} className={className}></i>;
         };
@@ -35,25 +42,91 @@
         const App = () => {
             const [activeDay, setActiveDay] = useState(1);
 
+            // 定義座標系統 (SVG 500x800)
             const locations = {
-                tpe: { x: 50, y: 750, name: '桃園機場' },
-                sdj_air: { x: 320, y: 650, name: '仙台機場', pref: '宮城' },
+                tpe: { x: 50, y: 750, name: '台北桃園' },
+                sdj_air: { x: 340, y: 660, name: '仙台機場', pref: '宮城' },
                 sendai: { x: 300, y: 600, name: '仙台市', pref: '宮城' },
-                morioka: { x: 300, y: 300, name: '盛岡', pref: '岩手' },
-                appi: { x: 280, y: 180, name: '安比高原', pref: '岩手' },
-                zao: { x: 180, y: 620, name: '藏王 (狐狸村/樹冰)', pref: '山形' },
-                matsushima: { x: 380, y: 550, name: '松島', pref: '宮城' },
+                appi: { x: 280, y: 150, name: '安比高原', pref: '岩手' },
+                ginzan: { x: 180, y: 400, name: '銀山溫泉', pref: '山形' },
+                yamadera: { x: 220, y: 550, name: '山寺', pref: '山形' },
+                zao: { x: 180, y: 620, name: '藏王/狐狸村', pref: '宮城/山形' },
             };
 
+            // 在資料結構中新增 'dinner' 欄位
             const days = [
-                { day: 1, title: '抵達與北上', path: ['sdj_air', 'appi'], desc: '仙台機場直奔安比高原 (直達巴士)', icon: 'plane' },
-                { day: 2, title: '安比滑雪', path: ['appi'], desc: '安比高原雪場活動', icon: 'snowflake' },
-                { day: 3, title: '安比滑雪', path: ['appi'], desc: '安比高原雪場活動', icon: 'snowflake' },
-                { day: 4, title: '安比滑雪', path: ['appi'], desc: '安比高原最後衝刺', icon: 'snowflake' },
-                { day: 5, title: '美食移動日', path: ['appi', 'morioka', 'sendai'], desc: '盛岡碗麵挑戰 → 仙台牛舌', icon: 'utensils' },
-                { day: 6, title: '療癒與震撼', path: ['sendai', 'zao', 'sendai'], desc: '狐狸村 + 藏王樹冰 (包車一日遊)', icon: 'map-pin' },
-                { day: 7, title: '海鮮與購物', path: ['sendai', 'matsushima', 'sendai'], desc: '松島牡蠣 + 仙台市區購物', icon: 'shopping-bag' },
-                { day: 8, title: '完美歸賦', path: ['sendai', 'sdj_air'], desc: '仙台朝市 → 仙台機場', icon: 'plane' },
+                { 
+                    day: 1, 
+                    title: '抵達雪國', 
+                    path: ['tpe', 'sdj_air', 'appi'], 
+                    desc: '桃園飛往仙台，直奔安比高原。享用星宇機上餐，抵達後接駁巴士直達飯店，開啟雪國之夜。', 
+                    icon: 'plane',
+                    date: '02/01',
+                    dinner: '飯店居酒屋 / Room Service'
+                },
+                { 
+                    day: 2, 
+                    title: '安比燒肉', 
+                    path: ['appi'], 
+                    desc: '早晨岩手優格補充能量，整日征服前山滑道。晚上享用燒肉大餐，補充消耗的熱量。', 
+                    icon: 'snowflake',
+                    date: '02/02',
+                    dinner: '李朝苑 前澤牛燒肉'
+                },
+                { 
+                    day: 3, 
+                    title: '溫泉修復', 
+                    path: ['appi'], 
+                    desc: '前往西館山滑道避開人潮，午後享受白樺之湯露天溫泉，修復肌肉疲勞。', 
+                    icon: 'waves',
+                    date: '02/03',
+                    dinner: '和食 七時雨 懷石料理'
+                },
+                { 
+                    day: 4, 
+                    title: '法式慶功', 
+                    path: ['appi'], 
+                    desc: '挑戰長距離滑行，下午雪上摩托車樂園。晚上舉辦慶功宴，享受最後的安比之夜。', 
+                    icon: 'party-popper',
+                    date: '02/04',
+                    dinner: 'Lapin d\'Or 法式料理'
+                },
+                { 
+                    day: 5, 
+                    title: '移動日', 
+                    path: ['appi', 'sendai'], 
+                    desc: '告別安比，移動至仙台。入住河原町包棟民宿，晚上直奔頂級燒肉名店。', 
+                    icon: 'car',
+                    date: '02/05',
+                    dinner: '米澤牛/仙台牛 燒肉 (仔虎/和火一)'
+                },
+                { 
+                    day: 6, 
+                    title: '銀山山寺', 
+                    path: ['sendai', 'yamadera', 'ginzan', 'sendai'], 
+                    desc: '挑戰山寺千階雪梯絕景，午後前往銀山溫泉體驗大正浪漫。晚上回仙台品嚐極致口感牛舌。', 
+                    icon: 'map-pin',
+                    date: '02/06',
+                    dinner: '閣 牛舌料理 (必點牛舌刺身)'
+                },
+                { 
+                    day: 7, 
+                    title: '樹冰狐狸', 
+                    path: ['sendai', 'zao', 'sendai'], 
+                    desc: '包車一日遊：早鳥衝藏王樹冰看雪怪，下午藏王狐狸村抱狐狸。晚上探索在地居酒屋。', 
+                    icon: 'camera',
+                    date: '02/07',
+                    dinner: '仙台商店街 (Happy Road) 居酒屋'
+                },
+                { 
+                    day: 8, 
+                    title: '完美歸賦', 
+                    path: ['sendai', 'sdj_air', 'tpe'], 
+                    desc: '仙台朝市海鮮丼早餐，仙台城跡巡禮。S-PAL 最後採買伴手禮，帶著滿滿回憶返台。', 
+                    icon: 'plane',
+                    date: '02/08',
+                    dinner: '機上餐 / 溫暖的家'
+                },
             ];
 
             const currentDay = days.find(d => d.day === activeDay);
@@ -62,15 +135,15 @@
                 <div className="flex flex-col md:flex-row h-full w-full bg-slate-50 font-sans p-4 gap-4 overflow-hidden">
                     {/* 左側地圖面板 */}
                     <div className="flex-1 bg-white rounded-3xl shadow-xl relative p-6 flex items-center justify-center overflow-hidden min-h-[500px]">
-                        <div className="absolute top-6 left-6 z-10">
-                            <h2 className="text-2xl font-bold text-slate-800">日本東北移動地圖</h2>
-                            <p className="text-slate-500">Day {activeDay}: {currentDay.title}</p>
+                        <div className="absolute top-6 left-6 z-10 pointer-events-none">
+                            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">東北多巴胺極限之旅</h2>
+                            <p className="text-slate-500 font-medium">Day {activeDay} ({currentDay.date}): {currentDay.title}</p>
                         </div>
 
-                        <svg viewBox="0 0 500 800" className="w-full h-full max-h-[700px]">
-                            <path d="M200,100 Q350,50 450,200 T400,500 T300,750 T150,600 T150,200 Z" fill="#f1f5f9" stroke="#cbd5e1" strokeWidth="2" />
-                            <line x1="150" y1="450" x2="450" y2="450" stroke="#e2e8f0" strokeDasharray="4" />
-                            <text x="350" y="440" className="fill-slate-300 text-[12px]">宮城 / 岩手 邊界</text>
+                        <svg viewBox="0 0 500 800" className="w-full h-full max-h-[750px] select-none">
+                            <path d="M220,100 Q400,50 480,250 T420,600 T300,780 T100,650 T120,200 Z" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="2" />
+                            <path d="M120,500 Q300,480 450,520" fill="none" stroke="#e2e8f0" strokeWidth="1.5" strokeDasharray="4" />
+                            <text x="380" y="500" className="fill-slate-300 text-[10px]">宮城 / 岩手</text>
 
                             {days.map((d) => {
                                 if (d.path.length < 2) return null;
@@ -78,14 +151,22 @@
                                     if (idx === 0) return null;
                                     const start = locations[d.path[idx - 1]];
                                     const end = locations[loc];
+                                    const isCurrentDay = activeDay === d.day;
+                                    
                                     return (
-                                        <line
-                                            key={`path-${d.day}-${idx}`}
-                                            x1={start.x} y1={start.y} x2={end.x} y2={end.y}
-                                            stroke={activeDay === d.day ? "#3b82f6" : "#e2e8f0"}
-                                            strokeWidth={activeDay === d.day ? "4" : "1"}
-                                            className="transition-all duration-500"
-                                        />
+                                        <g key={`path-${d.day}-${idx}`}>
+                                            <line 
+                                                x1={start.x} y1={start.y} x2={end.x} y2={end.y} 
+                                                stroke="#f1f5f9" strokeWidth="2"
+                                            />
+                                            <line
+                                                x1={start.x} y1={start.y} x2={end.x} y2={end.y}
+                                                stroke={isCurrentDay ? "#3b82f6" : "transparent"}
+                                                strokeWidth="4" strokeLinecap="round"
+                                                className="transition-all duration-700"
+                                                strokeDasharray={isCurrentDay ? "5 0" : "0 1000"} 
+                                            />
+                                        </g>
                                     );
                                 });
                             })}
@@ -93,17 +174,15 @@
                             {Object.entries(locations).map(([key, loc]) => {
                                 const isActive = currentDay.path.includes(key);
                                 return (
-                                    <g key={key}>
-                                        <circle
-                                            cx={loc.x} cy={loc.y} r={isActive ? 8 : 4}
-                                            fill={isActive ? "#3b82f6" : "#94a3b8"}
-                                        />
-                                        <text
-                                            x={loc.x + 12} y={loc.y + 4}
-                                            className={`text-[12px] font-bold ${isActive ? "fill-blue-600" : "fill-slate-400"}`}
-                                        >
-                                            {loc.name}
-                                        </text>
+                                    <g key={key} className="transition-all duration-300">
+                                        {isActive && (
+                                            <circle cx={loc.x} cy={loc.y} r="12" fill="#3b82f6" opacity="0.2">
+                                                <animate attributeName="r" from="8" to="20" dur="1.5s" repeatCount="indefinite" />
+                                                <animate attributeName="opacity" from="0.4" to="0" dur="1.5s" repeatCount="indefinite" />
+                                            </circle>
+                                        )}
+                                        <circle cx={loc.x} cy={loc.y} r={isActive ? 6 : 4} fill={isActive ? "#2563eb" : "#94a3b8"} stroke="white" strokeWidth="2" />
+                                        <text x={loc.x + 10} y={loc.y + 4} className={`text-[12px] font-bold transition-colors duration-300 ${isActive ? "fill-slate-800" : "fill-slate-400"}`}>{loc.name}</text>
                                     </g>
                                 );
                             })}
@@ -111,16 +190,15 @@
                     </div>
 
                     {/* 右側資訊面板 */}
-                    <div className="w-full md:w-80 flex flex-col gap-4 overflow-y-auto pr-2">
-                        <div className="grid grid-cols-4 gap-2">
+                    <div className="w-full md:w-96 flex flex-col gap-4 overflow-hidden">
+                        <div className="grid grid-cols-4 gap-2 shrink-0">
                             {days.map((d) => (
                                 <button
-                                    key={d.day}
-                                    onClick={() => setActiveDay(d.day)}
-                                    className={`py-3 rounded-xl font-bold transition-all ${
+                                    key={d.day} onClick={() => setActiveDay(d.day)}
+                                    className={`py-2 rounded-xl text-sm font-bold transition-all border ${
                                         activeDay === d.day 
-                                        ? "bg-blue-600 text-white shadow-lg" 
-                                        : "bg-white text-slate-400 hover:bg-blue-50"
+                                        ? "bg-blue-600 text-white border-blue-600 shadow-md transform scale-105" 
+                                        : "bg-white text-slate-400 border-slate-100 hover:border-blue-200 hover:text-blue-500"
                                     }`}
                                 >
                                     D{d.day}
@@ -128,26 +206,60 @@
                             ))}
                         </div>
 
-                        <div className="bg-white rounded-2xl p-5 shadow-lg border-l-4 border-blue-600 flex-1">
-                            <div className="flex items-center gap-2 mb-3">
-                                <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
-                                    <Icon name={currentDay.icon} className="w-5 h-5" />
+                        <div className="bg-white rounded-2xl p-6 shadow-lg border-t-4 border-blue-600 flex-1 overflow-y-auto">
+                            <div className="flex justify-between items-start mb-4">
+                                <div>
+                                    <div className="text-xs font-bold text-blue-500 mb-1 tracking-wider uppercase">Schedule</div>
+                                    <h3 className="text-2xl font-bold text-slate-800">{currentDay.title}</h3>
                                 </div>
-                                <h3 className="text-xl font-bold text-slate-800">Day {currentDay.day}</h3>
+                                <div className="p-3 bg-blue-50 text-blue-600 rounded-full shadow-inner">
+                                    <Icon name={currentDay.icon} className="w-6 h-6" />
+                                </div>
                             </div>
                             
-                            <p className="text-slate-600 mb-6 text-sm">{currentDay.desc}</p>
+                            <div className="flex items-center gap-2 mb-6">
+                                <span className="px-3 py-1 bg-slate-100 text-slate-600 text-xs rounded-full font-mono">
+                                    2026/{currentDay.date}
+                                </span>
+                                <span className="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full font-bold">
+                                    {currentDay.path.length > 1 ? "移動日" : "定點活動"}
+                                </span>
+                            </div>
+
+                            <div className="mb-6">
+                                <h4 className="text-sm font-bold text-slate-400 mb-2 uppercase tracking-wide">本日亮點</h4>
+                                <p className="text-slate-600 leading-relaxed text-sm bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                    {currentDay.desc}
+                                </p>
+
+                                {/* 新增：晚餐區塊 */}
+                                <div className="mt-4 p-3 bg-orange-50 rounded-xl border border-orange-100 flex items-center gap-3 shadow-sm">
+                                    <div className="p-2 bg-white text-orange-500 rounded-full shadow-sm flex-shrink-0">
+                                        <Icon name="utensils" className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                        <div className="text-[10px] font-bold text-orange-400 uppercase tracking-wide">Dinner</div>
+                                        <div className="text-orange-900 font-bold text-sm">{currentDay.dinner}</div>
+                                    </div>
+                                </div>
+                            </div>
 
                             <div className="space-y-4">
-                                <div className="text-xs font-semibold text-slate-400 uppercase">路線重點</div>
-                                {currentDay.path.map((locKey, idx) => (
-                                    <div key={idx} className="flex items-center gap-3">
-                                        <div className="w-5 h-5 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-[10px] font-bold border border-slate-200">
-                                            {idx + 1}
+                                <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wide">移動路線</h4>
+                                <div className="relative pl-2">
+                                    <div className="absolute left-[19px] top-2 bottom-4 w-0.5 bg-slate-200 -z-10"></div>
+                                    {currentDay.path.map((locKey, idx) => (
+                                        <div key={idx} className="flex items-center gap-4 mb-4 last:mb-0 group">
+                                            <div className="w-9 h-9 rounded-full bg-white border-2 border-slate-200 text-slate-400 flex items-center justify-center text-xs font-bold shadow-sm z-10 group-hover:border-blue-400 group-hover:text-blue-500 transition-colors">
+                                                {idx + 1}
+                                            </div>
+                                            <div className="flex-1 p-3 rounded-lg border border-slate-100 bg-white shadow-sm hover:shadow-md transition-shadow">
+                                                <div className="text-slate-800 font-bold text-sm">{locations[locKey].name}</div>
+                                                <div className="text-slate-400 text-xs">{locations[locKey].pref || '交通節點'}</div>
+                                            </div>
                                         </div>
-                                        <div className="text-slate-800 text-sm font-medium">{locations[locKey].name}</div>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>
