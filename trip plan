@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>東北多巴胺之旅移動地圖</title>
+    <!-- 載入 React 框架 -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- 載入 Babel 用於解析 JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- 載入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 載入 Lucide 圖示 -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+        #root { height: 100%; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // 模擬 Lucide React 圖示組件
+        const Icon = ({ name, className }) => {
+            useEffect(() => {
+                lucide.createIcons();
+            }, [name]);
+            return <i data-lucide={name} className={className}></i>;
+        };
+
+        const App = () => {
+            const [activeDay, setActiveDay] = useState(1);
+
+            const locations = {
+                tpe: { x: 50, y: 750, name: '桃園機場' },
+                sdj_air: { x: 320, y: 650, name: '仙台機場', pref: '宮城' },
+                sendai: { x: 300, y: 600, name: '仙台市', pref: '宮城' },
+                morioka: { x: 300, y: 300, name: '盛岡', pref: '岩手' },
+                appi: { x: 280, y: 180, name: '安比高原', pref: '岩手' },
+                zao: { x: 180, y: 620, name: '藏王 (狐狸村/樹冰)', pref: '山形' },
+                matsushima: { x: 380, y: 550, name: '松島', pref: '宮城' },
+            };
+
+            const days = [
+                { day: 1, title: '抵達與北上', path: ['sdj_air', 'appi'], desc: '仙台機場直奔安比高原 (直達巴士)', icon: 'plane' },
+                { day: 2, title: '安比滑雪', path: ['appi'], desc: '安比高原雪場活動', icon: 'snowflake' },
+                { day: 3, title: '安比滑雪', path: ['appi'], desc: '安比高原雪場活動', icon: 'snowflake' },
+                { day: 4, title: '安比滑雪', path: ['appi'], desc: '安比高原最後衝刺', icon: 'snowflake' },
+                { day: 5, title: '美食移動日', path: ['appi', 'morioka', 'sendai'], desc: '盛岡碗麵挑戰 → 仙台牛舌', icon: 'utensils' },
+                { day: 6, title: '療癒與震撼', path: ['sendai', 'zao', 'sendai'], desc: '狐狸村 + 藏王樹冰 (包車一日遊)', icon: 'map-pin' },
+                { day: 7, title: '海鮮與購物', path: ['sendai', 'matsushima', 'sendai'], desc: '松島牡蠣 + 仙台市區購物', icon: 'shopping-bag' },
+                { day: 8, title: '完美歸賦', path: ['sendai', 'sdj_air'], desc: '仙台朝市 → 仙台機場', icon: 'plane' },
+            ];
+
+            const currentDay = days.find(d => d.day === activeDay);
+
+            return (
+                <div className="flex flex-col md:flex-row h-full w-full bg-slate-50 font-sans p-4 gap-4 overflow-hidden">
+                    {/* 左側地圖面板 */}
+                    <div className="flex-1 bg-white rounded-3xl shadow-xl relative p-6 flex items-center justify-center overflow-hidden min-h-[500px]">
+                        <div className="absolute top-6 left-6 z-10">
+                            <h2 className="text-2xl font-bold text-slate-800">日本東北移動地圖</h2>
+                            <p className="text-slate-500">Day {activeDay}: {currentDay.title}</p>
+                        </div>
+
+                        <svg viewBox="0 0 500 800" className="w-full h-full max-h-[700px]">
+                            <path d="M200,100 Q350,50 450,200 T400,500 T300,750 T150,600 T150,200 Z" fill="#f1f5f9" stroke="#cbd5e1" strokeWidth="2" />
+                            <line x1="150" y1="450" x2="450" y2="450" stroke="#e2e8f0" strokeDasharray="4" />
+                            <text x="350" y="440" className="fill-slate-300 text-[12px]">宮城 / 岩手 邊界</text>
+
+                            {days.map((d) => {
+                                if (d.path.length < 2) return null;
+                                return d.path.map((loc, idx) => {
+                                    if (idx === 0) return null;
+                                    const start = locations[d.path[idx - 1]];
+                                    const end = locations[loc];
+                                    return (
+                                        <line
+                                            key={`path-${d.day}-${idx}`}
+                                            x1={start.x} y1={start.y} x2={end.x} y2={end.y}
+                                            stroke={activeDay === d.day ? "#3b82f6" : "#e2e8f0"}
+                                            strokeWidth={activeDay === d.day ? "4" : "1"}
+                                            className="transition-all duration-500"
+                                        />
+                                    );
+                                });
+                            })}
+
+                            {Object.entries(locations).map(([key, loc]) => {
+                                const isActive = currentDay.path.includes(key);
+                                return (
+                                    <g key={key}>
+                                        <circle
+                                            cx={loc.x} cy={loc.y} r={isActive ? 8 : 4}
+                                            fill={isActive ? "#3b82f6" : "#94a3b8"}
+                                        />
+                                        <text
+                                            x={loc.x + 12} y={loc.y + 4}
+                                            className={`text-[12px] font-bold ${isActive ? "fill-blue-600" : "fill-slate-400"}`}
+                                        >
+                                            {loc.name}
+                                        </text>
+                                    </g>
+                                );
+                            })}
+                        </svg>
+                    </div>
+
+                    {/* 右側資訊面板 */}
+                    <div className="w-full md:w-80 flex flex-col gap-4 overflow-y-auto pr-2">
+                        <div className="grid grid-cols-4 gap-2">
+                            {days.map((d) => (
+                                <button
+                                    key={d.day}
+                                    onClick={() => setActiveDay(d.day)}
+                                    className={`py-3 rounded-xl font-bold transition-all ${
+                                        activeDay === d.day 
+                                        ? "bg-blue-600 text-white shadow-lg" 
+                                        : "bg-white text-slate-400 hover:bg-blue-50"
+                                    }`}
+                                >
+                                    D{d.day}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="bg-white rounded-2xl p-5 shadow-lg border-l-4 border-blue-600 flex-1">
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
+                                    <Icon name={currentDay.icon} className="w-5 h-5" />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-800">Day {currentDay.day}</h3>
+                            </div>
+                            
+                            <p className="text-slate-600 mb-6 text-sm">{currentDay.desc}</p>
+
+                            <div className="space-y-4">
+                                <div className="text-xs font-semibold text-slate-400 uppercase">路線重點</div>
+                                {currentDay.path.map((locKey, idx) => (
+                                    <div key={idx} className="flex items-center gap-3">
+                                        <div className="w-5 h-5 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-[10px] font-bold border border-slate-200">
+                                            {idx + 1}
+                                        </div>
+                                        <div className="text-slate-800 text-sm font-medium">{locations[locKey].name}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
